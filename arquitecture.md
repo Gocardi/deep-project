@@ -33,6 +33,60 @@ deep-project/
 ├── ARQUITECTURA.md             # Este documento
 └── .gitignore                  # Exclusión de módulos, venvs y data cruda
 
+```
+
+---
+
+## Flujo de Datos (El Pipeline)
+
+### Fase 1: Ingesta (TypeScript + Node.js)
+
+El módulo `apps/scraper` se encarga de recolectar la "materia prima".
+
+* **Herramientas:** TypeScript, Axios, Cheerio.
+* **Objetivo:** Extraer métricas limpias (Goles Esperados - xG) de plataformas online o archivos JSON estáticos.
+* **ORM:** Prisma v7 con adaptador nativo `pg` inyecta los datos de forma relacional evitando duplicados (Upsert).
+
+### Fase 2: Almacenamiento Frio (PostgreSQL)
+
+Contenedor Docker levantado en el puerto `5432`.
+
+* **Tabla `Team`:** Catálogo de equipos oficiales.
+* **Tabla `Match`:** Registro histórico con IDs únicos, fechas, resultados tradicionales y métricas avanzadas (xG local, xG visitante).
+
+### Fase 3: Procesamiento Tensorial (Python + PyTorch)
+
+El módulo `apps/ml-engine` convierte los registros SQL en matemáticas para la GPU.
+
+* **Conexión:** `SQLAlchemy` y `psycopg2` extraen los datos vía queries.
+* **Análisis:** `Pandas` estructura los DataFrames y `Matplotlib` genera gráficas de correlación.
+* **Entrenamiento:** Los datos se convierten en tensores de PyTorch de tipo `float32` y se envían a la memoria de la RTX 4060 (CUDA) para alimentar modelos predictivos (XGBoost, LSTMs).
+
+---
+
+## Protocolos de Ejecución Rápida
+
+**1. Levantar la Base de Datos:**
+```powershell
+docker-compose up -d
+```
+
+**2. Ejecutar Scraper / Migraciones (TypeScript):**
+```powershell
+cd apps\scraper
+npx prisma migrate dev
+npx ts-node index.ts
+```
+
+**3. Ejecutar Pipeline de Machine Learning (Python):**
+```powershell
+cd apps\ml-engine
+.venv\Scripts\activate
+python pipeline.py
+```
+
+
+```mermaid
 graph TD
     subgraph Fuentes de Datos
         A[Webs: Understat / FBref]
@@ -68,3 +122,4 @@ graph TD
         G -.->|Exportación de Pesos .pt| I
         I -->|Endpoints| J
     end
+```
