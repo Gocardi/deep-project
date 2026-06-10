@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Team {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  homeMatches Match[]  @relation("HomeTeam")
+  awayMatches Match[]  @relation("AwayTeam")
+}
+
+model Match {
+  id          String   @id // Usaremos el ID de Understat o FBref
+  date        DateTime
+  
+  homeTeamId  Int
+  awayTeamId  Int
+  homeTeam    Team     @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeam    Team     @relation("AwayTeam", fields: [awayTeamId], references: [id])
+
+  // Resultados tradicionales
+  homeGoals   Int
+  awayGoals   Int
+
+  // Métricas predictivas clave
+  homeXG      Float    
+  awayXG      Float    
+  homePPDA    Float?   
+  awayPPDA    Float?
+
+  createdAt   DateTime @default(now())
+}
