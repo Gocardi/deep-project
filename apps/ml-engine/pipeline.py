@@ -57,8 +57,8 @@ def main():
     # ---------------------------------------------------------
     print("\n3. Preparando el motor de Deep Learning...")
     # Para el modelo predictivo, aislamos los números. Ahora con 4 dimensiones de features: xG y PPDA
-    features = df[['homeXG', 'awayXG', 'homePPDA', 'awayPPDA']].values
-    targets = df[['homeGoals', 'awayGoals']].values
+    features = df[['homeXG', 'awayXG', 'homePPDA', 'awayPPDA']].astype(float).values
+    targets = df[['homeGoals', 'awayGoals']].astype(float).values
 
     # Verificamos si tu RTX 4060 está lista para recibir los datos
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
