@@ -16,7 +16,8 @@ def main():
                t1.name as home_team, 
                t2.name as away_team, 
                m."homeGoals", m."awayGoals", 
-               m."homeXG", m."awayXG"
+               m."homeXG", m."awayXG",
+               m."homePPDA", m."awayPPDA"
         FROM "Match" m
         JOIN "Team" t1 ON m."homeTeamId" = t1.id
         JOIN "Team" t2 ON m."awayTeamId" = t2.id
@@ -24,6 +25,11 @@ def main():
     
     # Pandas lee directamente de la base de datos y lo convierte en un DataFrame
     df = pd.read_sql(query, engine)
+    
+    # Rellenamos valores nulos de PPDA con la media o un valor por defecto (ej. 10.0)
+    df['homePPDA'] = df['homePPDA'].fillna(df['homePPDA'].mean() if df['homePPDA'].notnull().any() else 10.0)
+    df['awayPPDA'] = df['awayPPDA'].fillna(df['awayPPDA'].mean() if df['awayPPDA'].notnull().any() else 10.0)
+    
     print("\n--- Datos Extraídos ---")
     print(df)
 
@@ -50,8 +56,8 @@ def main():
 
     # ---------------------------------------------------------
     print("\n3. Preparando el motor de Deep Learning...")
-    # Para el modelo predictivo, aislamos solo los números, la IA no entiende de nombres en texto plano (aún)
-    features = df[['homeXG', 'awayXG']].values
+    # Para el modelo predictivo, aislamos los números. Ahora con 4 dimensiones de features: xG y PPDA
+    features = df[['homeXG', 'awayXG', 'homePPDA', 'awayPPDA']].values
     targets = df[['homeGoals', 'awayGoals']].values
 
     # Verificamos si tu RTX 4060 está lista para recibir los datos
@@ -63,7 +69,7 @@ def main():
     y_tensor = torch.tensor(targets, dtype=torch.float32).to(device)
 
     print("\n--- Tensores listos en memoria de Video ---")
-    print(f"Features (X) Shape: {X_tensor.shape} | Contenido:\n{X_tensor}")
+    print(f"Features (X) Shape: {X_tensor.shape} | Contenido (xG + PPDA):\n{X_tensor}")
     print(f"Targets (y) Shape: {y_tensor.shape} | Contenido:\n{y_tensor}")
 
 if __name__ == "__main__":
